@@ -1,2 +1,6 @@
 # NanoDMA
-As simple as it gets. A low-latency OBI DMA in SystemVerilog.
+
+A simple, low-latency DMA. Compatible to a generic TCDM/OBI (subset) protocol on the read & write interfaces, config through a generic REG/APB-style interface.
+
+## Integration
+This IP is developed as a part of [Atalanta](https://github.com/soc-hub-fi/atalanta). Testing is (for now) limited exclusively to software-based integration level tests inside the microcontroller project.

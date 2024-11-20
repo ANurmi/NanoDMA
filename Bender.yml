@@ -1,0 +1,9 @@
+package:
+  name: nanodma
+
+dependencies:
+  common_cells: { git: "https://github.com/pulp-platform/common_cells/tree/master", rev: master}
+
+sources:
+  files:
+    - src/ndma.sv
