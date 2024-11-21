@@ -49,9 +49,9 @@ fifo_v3 #(
   .empty_o    (),
   .usage_o    (),
   .data_i     (),
-  .push_i     (),
+  .push_i     (0),
   .data_o     (),
-  .pop_o      ()
+  .pop_i      (0)
 );
 
 ndma_read_mgr  #() i_read_mgr (
@@ -64,5 +64,9 @@ ndma_write_mgr #() i_write_mgr (
   .rst_ni,
   .addr_i ()
 );
+
+// sanity tieoff:
+assign  read_mgr.req = 0;
+assign write_mgr.req = 0;
 
 endmodule : ndma
