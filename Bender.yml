@@ -2,7 +2,7 @@ package:
   name: nanodma
 
 dependencies:
-  common_cells: { git: "https://github.com/pulp-platform/common_cells/tree/master", rev: master}
+  common_cells: { git: "https://github.com/pulp-platform/common_cells.git", version: 1.37.0 }
 
 sources:
   files:
