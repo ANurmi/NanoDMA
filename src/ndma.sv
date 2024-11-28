@@ -2,7 +2,7 @@
 
 module ndma #(
   // Depth of internal FIFO -> how much read data can be buffered if writes are congested
-  parameter  int unsigned Depth     = 1,
+  parameter  int unsigned Depth     = 3,
   // Maximal transfer size, effects internal counter width
   parameter  int unsigned MaxTxSize = 256,
   parameter  int unsigned DataWidth = 32,
@@ -26,14 +26,54 @@ logic          [31:0] src_addr, dst_addr;
 logic          [31:0] read_data, write_data;
 logic [TxCntBits-1:0] tx_counter_q, tx_counter_d;
 logic                 rd_req, wr_req;
+logic                 fifo_full, fifo_empty;
+
+typedef enum logic [2:0] {
+  EMPTY,
+  FILL,
+  FLOW,
+  DRAIN,
+  FULL
+} state_t;
+
+state_t curr_state, next_state;
 
 always_ff @(posedge clk_i or negedge rst_ni) begin : g_regs
   if (~rst_ni) begin
     tx_counter_q <= '0;
+    curr_state <= EMPTY;
   end else begin
+    curr_state <= next_state;
     tx_counter_q <= tx_counter_d;
   end
 end : g_regs
+
+always_comb
+  begin : main_fsm
+    next_state = EMPTY;
+    wr_req     = 0;
+
+    case (curr_state)
+      EMPTY: begin
+        if (rd_req) begin
+          next_state = FILL;
+        end
+      end
+      FILL: begin
+        if (!fifo_empty) begin
+          next_state = FLOW;
+          wr_req = 1;
+        end else begin
+          next_state = FILL;
+        end
+      end
+      FLOW: begin
+      end
+      DRAIN: ;
+      default:;
+    endcase
+  end
+
 
 fifo_v3 #(
   .DEPTH      (Depth),
@@ -43,12 +83,12 @@ fifo_v3 #(
   .rst_ni,
   .flush_i    (),
   .testmode_i (),
-  .full_o     (),
-  .empty_o    (),
+  .full_o     (fifo_full),
+  .empty_o    (fifo_empty),
   .usage_o    (),
-  .data_i     (),
-  .push_i     (0),
-  .data_o     (),
+  .data_i     (read_data),
+  .push_i     (read_mgr.rvalid),
+  .data_o     (write_data),
   .pop_i      (0)
 );
 
@@ -84,9 +124,5 @@ ndma_write_mgr #() i_write_mgr (
   .wdata_i   (write_data),
   .write_mgr (write_mgr)
 );
-
-// sanity tieoff:
-assign  read_mgr.req = 0;
-assign write_mgr.req = 0;
 
 endmodule : ndma

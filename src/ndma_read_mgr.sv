@@ -7,9 +7,65 @@ module ndma_read_mgr #()(
   OBI_BUS.Manager     read_mgr
 );
 
+typedef enum logic [1:0] {
+  IDLE,
+  ACK,
+  VALID
+} state_t;
 
-// sanity tieoff:
-assign  read_mgr.req = 0;
+state_t curr_state, next_state;
+
+always_ff @(posedge(clk_i) or negedge(rst_ni))
+  begin : state_reg
+    if(~rst_ni) begin
+      curr_state <= IDLE;
+    end
+    else begin
+      curr_state <= next_state;
+    end
+  end : state_reg
+
+always_comb
+  begin : main_fsm
+    next_state   = IDLE;
+    read_mgr.req = 0;
+    rdata_o      = 0;
+
+    case (curr_state)
+      IDLE: begin
+        if (req_i) begin
+          read_mgr.req  = 1;
+          read_mgr.addr = addr_i;
+          next_state    = ACK;
+        end
+      end
+      ACK: begin
+        if (read_mgr.gnt) begin
+          next_state = VALID;
+        end else begin
+          next_state = ACK;
+        end
+      end
+      VALID: begin
+        if (read_mgr.rvalid) begin
+          rdata_o = read_mgr.rdata;
+          if (req_i) begin
+            read_mgr.req  = 1;
+            read_mgr.addr = addr_i;
+            next_state    = ACK;
+          end else begin
+            next_state = IDLE;
+          end
+        end else begin
+          next_state = VALID;
+        end
+      end
+      default: next_state = IDLE;
+    endcase
+  end
+
+// always reading
+assign read_mgr.we = 0;
 
 
 endmodule : ndma_read_mgr
