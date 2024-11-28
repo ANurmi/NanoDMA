@@ -18,8 +18,8 @@ module ndma #(
   output logic        cfg_gnt_o,
   input  logic [31:0] cfg_addr_i,
   input  logic [31:0] cfg_wdata_i,
-  input  logic [31:0] cfg_rdata_o,
-  input  logic        cfg_rvalid_o
+  output logic [31:0] cfg_rdata_o,
+  output logic        cfg_rvalid_o
 );
 
 logic          [31:0] src_addr_q, dst_addr_q, src_addr_d, dst_addr_d;
@@ -52,6 +52,21 @@ fifo_v3 #(
   .push_i     (0),
   .data_o     (),
   .pop_i      (0)
+);
+
+ndma_reg #() i_cfg_regs (
+  .clk_i,
+  .rst_ni,
+  .req_i         (cfg_req_i),
+  .we_i          (cfg_we_i),
+  .gnt_o         (cfg_gnt_o),
+  .addr_i        (cfg_addr_i),
+  .wdata_i       (cfg_wdata_i),
+  .rdata_o       (cfg_rdata_o),
+  .rvalid_o      (cfg_rvalid_o),
+  .rd_mgr_addr_o (),
+  .wr_mgr_addr_o (),
+  .rd_mgr_req_o  ()
 );
 
 ndma_read_mgr  #() i_read_mgr (

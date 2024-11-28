@@ -6,6 +6,7 @@ dependencies:
 
 sources:
   files:
+    - src/ndma_reg.sv
     - src/ndma_read_mgr.sv
     - src/ndma_write_mgr.sv
     - src/ndma.sv
