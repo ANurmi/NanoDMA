@@ -22,17 +22,15 @@ module ndma #(
   output logic        cfg_rvalid_o
 );
 
-logic          [31:0] src_addr_q, dst_addr_q, src_addr_d, dst_addr_d;
+logic          [31:0] src_addr, dst_addr;
+logic          [31:0] read_data, write_data;
 logic [TxCntBits-1:0] tx_counter_q, tx_counter_d;
+logic                 rd_req, wr_req;
 
 always_ff @(posedge clk_i or negedge rst_ni) begin : g_regs
   if (~rst_ni) begin
-    src_addr_q   <= '0;
-    dst_addr_q   <= '0;
     tx_counter_q <= '0;
   end else begin
-    src_addr_q   <= src_addr_d;
-    dst_addr_q   <= dst_addr_d;
     tx_counter_q <= tx_counter_d;
   end
 end : g_regs
@@ -64,20 +62,27 @@ ndma_reg #() i_cfg_regs (
   .wdata_i       (cfg_wdata_i),
   .rdata_o       (cfg_rdata_o),
   .rvalid_o      (cfg_rvalid_o),
-  .rd_mgr_addr_o (),
-  .wr_mgr_addr_o (),
-  .rd_mgr_req_o  ()
+  .rd_mgr_addr_o (src_addr),
+  .wr_mgr_addr_o (dst_addr),
+  .rd_mgr_req_o  (rd_req),
+  .dma_tx_len_o  ()
 );
 
 ndma_read_mgr  #() i_read_mgr (
   .clk_i,
   .rst_ni,
-  .addr_i ()
+  .req_i    (rd_req),
+  .addr_i   (src_addr),
+  .rdata_o  (read_data),
+  .read_mgr (read_mgr)
 );
 ndma_write_mgr #() i_write_mgr (
   .clk_i,
   .rst_ni,
-  .addr_i ()
+  .req_i     (wr_req),
+  .addr_i    (dst_addr),
+  .wdata_i   (write_data),
+  .write_mgr (write_mgr)
 );
 
 // sanity tieoff:

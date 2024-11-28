@@ -10,6 +10,7 @@ module ndma_reg #()(
   output logic        rvalid_o,
   output logic [31:0] rd_mgr_addr_o,
   output logic [31:0] wr_mgr_addr_o,
+  output logic  [7:0] dma_tx_len_o,
   output logic        rd_mgr_req_o
 );
 
@@ -23,7 +24,10 @@ logic [31:0] rdata_d, rdata_q;
 logic  [7:0] dma_tx_len_d, dma_tx_len_q;
 logic        dma_tx_req_d, dma_tx_req_q;
 
-assign rdata_o = rdata_q;
+assign rd_mgr_addr_o = rd_mgr_addr_q;
+assign wr_mgr_addr_o = wr_mgr_addr_q;
+assign dma_tx_len_o  = dma_tx_len_q;
+assign rdata_o       = rdata_q;
 
 obi_handshake_fsm i_obi_fms (
   .clk_i,
