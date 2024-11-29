@@ -27,6 +27,7 @@ logic        dma_tx_req_d, dma_tx_req_q;
 assign rd_mgr_addr_o = rd_mgr_addr_q;
 assign wr_mgr_addr_o = wr_mgr_addr_q;
 assign dma_tx_len_o  = dma_tx_len_q;
+assign rd_mgr_req_o  = dma_tx_req_q;
 assign rdata_o       = rdata_q;
 
 obi_handshake_fsm i_obi_fms (
