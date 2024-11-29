@@ -32,10 +32,12 @@ logic                 reg_rd_req, rd_req, wr_req;
 logic                 fifo_full, fifo_empty;
 logic                 tx_done;
 
-typedef enum logic [1:0] {
+typedef enum logic [2:0] {
   //START,
   RESET,
-  REQ,
+  RD_REQ,
+  WR_REQ,
+  RD_WR_REQ,
   WAIT
   //FILL,
   //FLOW,
@@ -48,7 +50,7 @@ always_ff @(posedge clk_i or negedge rst_ni) begin : g_regs
   if (~rst_ni) begin
     rd_counter_q <= '0;
     wr_counter_q <= '0;
-    curr_state <= IDLE;
+    curr_state <= RESET;
   end else begin
     curr_state <= next_state;
     rd_counter_q <= rd_counter_d;
@@ -73,11 +75,23 @@ always_comb
     case (curr_state)
       RESET: begin
         if (reg_rd_req ) begin
-          rd_req     = 1;
-          next_state = REQ;
+          //rd_req     = 1;
+          next_state = RD_REQ;
         end
       end
-      REQ: begin
+      RD_REQ: begin
+        if (!tx_done)
+          next_state = WAIT;
+        if (!fifo_full)
+          rd_req = 1;
+      end
+      WR_REQ: begin
+        if (!tx_done)
+          next_state = WAIT;
+        if (!fifo_empty)
+          wr_req = 1;
+      end
+      RD_WR_REQ: begin
         if (!tx_done)
           next_state = WAIT;
         if (!fifo_empty)
@@ -86,7 +100,14 @@ always_comb
           rd_req = 1;
       end
       WAIT: begin
-        next_state = WAIT;
+        if(read_mgr.rvalid & write_mgr.rvalid)
+          next_state = RD_WR_REQ;
+        else if (read_mgr.rvalid)
+          next_state = RD_REQ;
+        else if ( write_mgr.rvalid)
+          next_state = WR_REQ;
+        else
+          next_state = WAIT;
       end
       //FILL: begin
       //  if (!fifo_empty) begin
