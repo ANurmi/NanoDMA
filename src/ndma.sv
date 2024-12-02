@@ -30,18 +30,14 @@ logic [TxCntBits-1:0] wr_counter_q, wr_counter_d;
 logic [TxCntBits-1:0] tx_len;
 logic                 reg_rd_req, rd_req, wr_req;
 logic                 fifo_full, fifo_empty;
+logic                 read_busy, write_busy;
 logic                 tx_done;
 
-typedef enum logic [2:0] {
-  //START,
+typedef enum logic [1:0] {
   RESET,
   RD_REQ,
-  WR_REQ,
-  RD_WR_REQ,
+  RD_ACK,
   WAIT
-  //FILL,
-  //FLOW,
-  //DRAIN
 } state_t;
 
 state_t curr_state, next_state;
@@ -85,48 +81,25 @@ always_comb
         if (!fifo_full)
           rd_req = 1;
       end
-      WR_REQ: begin
-        if (!tx_done)
-          next_state = WAIT;
-        if (!fifo_empty)
-          wr_req = 1;
-      end
-      RD_WR_REQ: begin
-        if (!tx_done)
-          next_state = WAIT;
-        if (!fifo_empty)
-          wr_req = 1;
-        if (!fifo_full)
-          rd_req = 1;
-      end
       WAIT: begin
-        if(read_mgr.rvalid & write_mgr.rvalid)
-          next_state = RD_WR_REQ;
+        //if(read_mgr.rvalid & write_mgr.rvalid)
+        //  next_state = RD_WR_REQ;
+        if (tx_done)
+          next_state = RESET;
         else if (read_mgr.rvalid)
-          next_state = RD_REQ;
-        else if ( write_mgr.rvalid)
-          next_state = WR_REQ;
+          next_state = RD_ACK;
+        //else if ( write_mgr.rvalid)
+        //  next_state = WR_REQ;
         else
           next_state = WAIT;
       end
-      //FILL: begin
-      //  if (!fifo_empty) begin
-      //    next_state = FLOW;
-      //    //wr_req = 1;
-      //  end else begin
-      //    next_state = FILL;
-      //  end
-      //end
-      //FLOW: begin
-      //  if (rd_counter_q < tx_len) begin
-      //    if (!fifo_full)
-      //      rd_req = 1;
-      //    if (!fifo_empty)
-      //      wr_req = 1;
-      //  end
-      //  next_state = IDLE;
-      //end
-      //DRAIN: ;
+      RD_ACK: begin
+        if (!fifo_full & !read_busy)
+          rd_req = 1;
+        if (!fifo_empty & !write_busy)
+          wr_req = 1;
+        next_state = WAIT;
+      end
       default:;
     endcase
   end
@@ -146,7 +119,7 @@ fifo_v3 #(
   .data_i     (read_data),
   .push_i     (read_mgr.rvalid),
   .data_o     (write_data),
-  .pop_i      (0)
+  .pop_i      (wr_req)
 );
 
 ndma_reg #() i_cfg_regs (
@@ -171,7 +144,8 @@ ndma_read_mgr  #() i_read_mgr (
   .req_i    (rd_req),
   .addr_i   (src_addr),
   .rdata_o  (read_data),
-  .read_mgr (read_mgr)
+  .read_mgr (read_mgr),
+  .busy_o   (read_busy)
 );
 ndma_write_mgr #() i_write_mgr (
   .clk_i,
@@ -179,7 +153,8 @@ ndma_write_mgr #() i_write_mgr (
   .req_i     (wr_req),
   .addr_i    (dst_addr),
   .wdata_i   (write_data),
-  .write_mgr (write_mgr)
+  .write_mgr (write_mgr),
+  .busy_o    (write_busy)
 );
 
 endmodule : ndma

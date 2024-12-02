@@ -4,6 +4,7 @@ module ndma_write_mgr #()(
   input  logic        req_i,
   input  logic [31:0] addr_i,
   input  logic [31:0] wdata_i,
+  output logic        busy_o,
   OBI_BUS.Manager     write_mgr
 );
 
@@ -30,6 +31,7 @@ always_comb
     next_state      = IDLE;
     write_mgr.req   = 0;
     write_mgr.wdata = 0;
+    busy_o          = 0;
 
     case (curr_state)
       IDLE: begin
@@ -41,6 +43,7 @@ always_comb
         end
       end
       ACK: begin
+        busy_o = 1;
         if (write_mgr.gnt) begin
           next_state = VALID;
         end else begin
@@ -48,12 +51,14 @@ always_comb
         end
       end
       VALID: begin
+        busy_o = 1;
         if (write_mgr.rvalid) begin
           if (req_i) begin
             write_mgr.req  = 1;
             write_mgr.addr = addr_i;
             next_state    = ACK;
           end else begin
+            busy_o = 0;
             next_state = IDLE;
           end
         end else begin

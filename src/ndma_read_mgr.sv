@@ -4,6 +4,7 @@ module ndma_read_mgr #()(
   input  logic        req_i,
   input  logic [31:0] addr_i,
   output logic [31:0] rdata_o,
+  output logic        busy_o,
   OBI_BUS.Manager     read_mgr
 );
 
@@ -30,6 +31,7 @@ always_comb
     next_state   = IDLE;
     read_mgr.req = 0;
     rdata_o      = 0;
+    busy_o       = 0;
 
     case (curr_state)
       IDLE: begin
@@ -40,6 +42,7 @@ always_comb
         end
       end
       ACK: begin
+        busy_o = 1;
         if (read_mgr.gnt) begin
           next_state = VALID;
         end else begin
@@ -47,6 +50,7 @@ always_comb
         end
       end
       VALID: begin
+        busy_o = 1;
         if (read_mgr.rvalid) begin
           rdata_o = read_mgr.rdata;
           if (req_i) begin
@@ -54,6 +58,7 @@ always_comb
             read_mgr.addr = addr_i;
             next_state    = ACK;
           end else begin
+            busy_o = 0;
             next_state = IDLE;
           end
         end else begin
