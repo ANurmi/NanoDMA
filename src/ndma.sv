@@ -54,24 +54,26 @@ always_ff @(posedge clk_i or negedge rst_ni) begin : g_regs
   end
 end : g_regs
 
-assign rd_counter_d =  (read_mgr.rvalid) ? rd_counter_q + 1 : rd_counter_q;
-assign wr_counter_d = (write_mgr.rvalid) ? wr_counter_q + 1 : wr_counter_q;
-
 assign src_addr = src_addr_reg + (rd_counter_d * 4);
 assign dst_addr = dst_addr_reg + (wr_counter_d * 4);
+
+assign tx_done_irq_o = tx_done;
 
 assign tx_done = ((rd_counter_q == tx_len) && (wr_counter_q == tx_len));
 
 always_comb
   begin : main_fsm
-    next_state = RESET;
-    wr_req     = 0;
-    rd_req     = 0;
+    next_state   = RESET;
+    wr_req       = 0;
+    rd_req       = 0;
+    rd_counter_d =  (read_mgr.rvalid) ? rd_counter_q + 1 : rd_counter_q;
+    wr_counter_d = (write_mgr.rvalid) ? wr_counter_q + 1 : wr_counter_q;
 
     case (curr_state)
       RESET: begin
+        rd_counter_d = 0;
+        wr_counter_d = 0;
         if (reg_rd_req ) begin
-          //rd_req     = 1;
           next_state = RD_REQ;
         end
       end
@@ -82,14 +84,10 @@ always_comb
           rd_req = 1;
       end
       WAIT: begin
-        //if(read_mgr.rvalid & write_mgr.rvalid)
-        //  next_state = RD_WR_REQ;
         if (tx_done)
           next_state = RESET;
         else if (read_mgr.rvalid)
           next_state = RD_ACK;
-        //else if ( write_mgr.rvalid)
-        //  next_state = WR_REQ;
         else
           next_state = WAIT;
       end
