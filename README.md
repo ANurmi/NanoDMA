@@ -15,6 +15,6 @@ This IP is developed as a part of [Atalanta](https://github.com/soc-hub-fi/atala
 
 ### `CfgAddr` Layout
 
-| 31      | 30-8   | 7-0            |
-|---------|--------|----------------|
-| StartTX | unused | TxLen (Max 255)|
+|**Bit**  | 31      | 30-8   | 7-0            |
+|---------|---------|--------|----------------|
+|**Field**| StartTX | unused | TxLen (Max 255)|
