@@ -28,7 +28,9 @@ logic          [31:0] read_data, write_data;
 logic [TxCntBits-1:0] rd_counter_q, rd_counter_d;
 logic [TxCntBits-1:0] wr_counter_q, wr_counter_d;
 logic [TxCntBits-1:0] tx_len;
-logic                 reg_rd_req, rd_req, wr_req;
+logic                 reg_rd_req;
+logic                 rd_req_d, wr_req_d;
+logic                 rd_req_q, wr_req_q;
 logic                 fifo_full, fifo_empty;
 logic                 read_busy, write_busy;
 logic                 tx_done;
@@ -46,11 +48,15 @@ always_ff @(posedge clk_i or negedge rst_ni) begin : g_regs
   if (~rst_ni) begin
     rd_counter_q <= '0;
     wr_counter_q <= '0;
+    rd_req_q     <= '0;
+    wr_req_q     <= '0;
     curr_state <= RESET;
   end else begin
     curr_state <= next_state;
     rd_counter_q <= rd_counter_d;
     wr_counter_q <= wr_counter_d;
+    rd_req_q     <= rd_req_d;
+    wr_req_q     <= wr_req_d;
   end
 end : g_regs
 
@@ -63,8 +69,8 @@ always_comb
   begin : main_fsm
     next_state    = RESET;
     tx_done_irq_o = tx_done;
-    wr_req        = 0;
-    rd_req        = 0;
+    wr_req_d      = 0;
+    rd_req_d      = 0;
     rd_counter_d  =  (read_mgr.rvalid) ? rd_counter_q + 1 : rd_counter_q;
     wr_counter_d  = (write_mgr.rvalid) ? wr_counter_q + 1 : wr_counter_q;
 
@@ -81,7 +87,7 @@ always_comb
         if (!tx_done)
           next_state = WAIT;
         if (!fifo_full)
-          rd_req = 1;
+          rd_req_d = 1;
       end
       WAIT: begin
         if (tx_done)
@@ -93,9 +99,9 @@ always_comb
       end
       RD_ACK: begin
         if (!fifo_full & !read_busy)
-          rd_req = 1;
+          rd_req_d = 1;
         if (!fifo_empty & !write_busy)
-          wr_req = 1;
+          wr_req_d = 1;
         next_state = WAIT;
       end
       default:;
@@ -117,7 +123,7 @@ fifo_v3 #(
   .data_i     (read_data),
   .push_i     (read_mgr.rvalid),
   .data_o     (write_data),
-  .pop_i      (wr_req)
+  .pop_i      (wr_req_q)
 );
 
 ndma_reg #() i_cfg_regs (
@@ -139,7 +145,7 @@ ndma_reg #() i_cfg_regs (
 ndma_read_mgr  #() i_read_mgr (
   .clk_i,
   .rst_ni,
-  .req_i    (rd_req),
+  .req_i    (rd_req_q),
   .addr_i   (src_addr),
   .rdata_o  (read_data),
   .read_mgr (read_mgr),
@@ -148,7 +154,7 @@ ndma_read_mgr  #() i_read_mgr (
 ndma_write_mgr #() i_write_mgr (
   .clk_i,
   .rst_ni,
-  .req_i     (wr_req),
+  .req_i     (wr_req_q),
   .addr_i    (dst_addr),
   .wdata_i   (write_data),
   .write_mgr (write_mgr),
