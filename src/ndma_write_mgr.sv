@@ -70,7 +70,10 @@ always_comb
   end
 
 // always writing full words
-assign write_mgr.we = 1;
-assign write_mgr.be = 4'hF;
+assign write_mgr.we         = 1'b1;
+assign write_mgr.be         = 4'hF;
+
+assign write_mgr.aid        = '0;
+assign write_mgr.a_optional = '0;
 
 endmodule : ndma_write_mgr

@@ -115,8 +115,8 @@ fifo_v3 #(
 ) i_data_fifo (
   .clk_i,
   .rst_ni,
-  .flush_i    (),
-  .testmode_i (),
+  .flush_i    ('0),
+  .testmode_i ('0),
   .full_o     (fifo_full),
   .empty_o    (fifo_empty),
   .usage_o    (),

@@ -70,7 +70,12 @@ always_comb
   end
 
 // always reading
-assign read_mgr.we = 0;
+assign read_mgr.we         = 1'b0;
+
+assign read_mgr.be         = 4'b0;
+assign read_mgr.wdata      = '0;
+assign read_mgr.aid        = '0;
+assign read_mgr.a_optional = '0;
 
 
 endmodule : ndma_read_mgr
