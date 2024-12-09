@@ -31,6 +31,7 @@ always_comb
     next_state      = IDLE;
     write_mgr.req   = 0;
     write_mgr.wdata = 0;
+    write_mgr.addr  = 0;
     busy_o          = 0;
 
     case (curr_state)

@@ -28,10 +28,11 @@ always_ff @(posedge(clk_i) or negedge(rst_ni))
 
 always_comb
   begin : main_fsm
-    next_state   = IDLE;
-    read_mgr.req = 0;
-    rdata_o      = 0;
-    busy_o       = 0;
+    next_state    = IDLE;
+    read_mgr.req  = 0;
+    read_mgr.addr = 0;
+    rdata_o       = 0;
+    busy_o        = 0;
 
     case (curr_state)
       IDLE: begin
