@@ -75,6 +75,9 @@ assign read_mgr.we         = 1'b0;
 
 assign read_mgr.be         = 4'b0;
 assign read_mgr.wdata      = '0;
+assign read_mgr.reqpar     = '0;
+assign read_mgr.rready     = '0;
+assign read_mgr.rreadypar  = '0;
 assign read_mgr.aid        = '0;
 assign read_mgr.a_optional = '0;
 

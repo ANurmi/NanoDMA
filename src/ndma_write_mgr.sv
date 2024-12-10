@@ -74,6 +74,9 @@ always_comb
 assign write_mgr.we         = 1'b1;
 assign write_mgr.be         = 4'hF;
 
+assign write_mgr.reqpar     = '0;
+assign write_mgr.rready     = '0;
+assign write_mgr.rreadypar  = '0;
 assign write_mgr.aid        = '0;
 assign write_mgr.a_optional = '0;
 
