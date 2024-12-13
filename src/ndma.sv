@@ -33,7 +33,7 @@ logic                 rd_req_d, wr_req_d;
 logic                 rd_req_q, wr_req_q;
 logic                 fifo_full, fifo_empty;
 logic                 read_busy, write_busy;
-logic                 tx_done;
+logic                 tx_done, rd_done, wr_done;
 
 typedef enum logic [1:0] {
   RESET,
@@ -63,7 +63,9 @@ end : g_regs
 assign src_addr = src_addr_reg + (rd_counter_d * 4);
 assign dst_addr = dst_addr_reg + (wr_counter_d * 4);
 
-assign tx_done = ((rd_counter_q == tx_len) && (wr_counter_q == tx_len));
+assign rd_done = (rd_counter_q == tx_len);
+assign wr_done = (wr_counter_q == tx_len);
+assign tx_done = rd_done & wr_done;
 
 always_comb
   begin : main_fsm
@@ -86,7 +88,7 @@ always_comb
       RD_REQ: begin
         if (!tx_done)
           next_state = WAIT;
-        if (!fifo_full)
+        if (!fifo_full & !rd_done)
           rd_req_d = 1;
       end
       WAIT: begin
@@ -98,9 +100,9 @@ always_comb
           next_state = WAIT;
       end
       RD_ACK: begin
-        if (!fifo_full & !read_busy)
+        if (!fifo_full & !read_busy & !rd_done)
           rd_req_d = 1;
-        if (!fifo_empty & !write_busy)
+        if (!fifo_empty & !write_busy & !wr_done)
           wr_req_d = 1;
         next_state = WAIT;
       end
